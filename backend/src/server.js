@@ -1,6 +1,7 @@
 import { app } from "./app.js";
 import logger from "./utils/monitoring/logger.js";
 import { connectDB } from "./config/db.js";
+import { connectRabbitMQ } from "./config/rabbitMq.config.js";
 import mongoose from "mongoose";
 
 // Ensure all logger transports are flushed before exit
@@ -25,6 +26,7 @@ const startServer = async () => {
         logger.info(`🔌 Connecting DB...`);
 
         await connectDB();
+        await connectRabbitMQ();
 
         httpServer = await new Promise((resolve, reject) => {
             const server = app.listen(port, () => {
