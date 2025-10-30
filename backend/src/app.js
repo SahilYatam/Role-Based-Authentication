@@ -6,8 +6,11 @@ import cookieParser from "cookie-parser";
 import rateLimit from "express-rate-limit";
 import { errorHandler, notFoundHandler } from "./middlewares/globalErrorHandler.js";
 
-// import authRouter from "./routers/auth.routes.js"
-// import sessionRouter from "./routers/session.routes.js"
+import authRouter from "./routers/auth.routes.js"
+import sessionRouter from "./routers/session.routes.js"
+import taskRouter from "./routers/task.routes.js"
+import roleRouter from "./routers/role.routes.js"
+import roleRequestRouter from "./routers/roleRequest.routes.js"
 
 
 import { httpRequestsDuration, register } from "./utils/monitoring/metrics.js";
@@ -31,14 +34,21 @@ function limiter (windowMs, max) {
     });
 }
 
+app.set("trust proxy", true);
+
 // global limiter, applies to all routes
 const globalRateLimiting = limiter(15 * 60 * 1000, 1000) // 15 minutes, 1000 requests
 app.use(globalRateLimiting);
 
-// const authLimiter = limiter(15 * 60 * 1000, 100);
-// const sessionLimiter = limiter(15 * 60 * 1000, 100);
+const authLimiter = limiter(15 * 60 * 1000, 100);
+const sessionLimiter = limiter(15 * 60 * 1000, 100);
+const roleLimiter = limiter(15 * 60 * 1000, 500);
 
-// app.use("/api/v1/auth", authLimiter, authRouter);
+app.use("/api/v1/auth", authLimiter, authRouter);
+app.use("/api/v1/session", sessionLimiter, sessionLimiter);
+app.use("/api/v1/task", globalRateLimiting, taskRouter);
+app.use("/api/v1/role", roleLimiter, roleRouter);
+app.use("/api/v1/roleRequest", roleLimiter, roleRequestRouter);
 
 
 // --- Metrics middleware ---
