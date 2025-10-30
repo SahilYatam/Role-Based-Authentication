@@ -8,16 +8,17 @@ import { authService } from "../services/auth.service.js";
 import { sessionService } from "../services/session.service.js";
 import { passwordService } from "../services/password.service.js";
 import { otpService } from "../services/otp.service.js";
+import { loginRateLimiterService } from "../services/loginRateLimiting.service.js";
 
 const register = asyncHandler(async(req, res) => {
     const user = await authService.register(req.body);
     return res.status(200).json(new ApiResponse(200, {user}, "OTP sent successfully"));
 });
 
-const verfiyOtp = asyncHandler(async(req, res) => {
+const verifyOtp = asyncHandler(async(req, res) => {
     const {userId, otp} = req.body;
 
-    const {message} = await otpService.verfiyOtp(userId, otp);
+    const {message} = await otpService.verifyOtp(userId, otp);
 
     return res.status(200).json(new ApiResponse(200, {}, message));
 })
@@ -33,12 +34,30 @@ const validateCredentials = asyncHandler(async(req, res) => {
 });
 
 const login = asyncHandler(async(req, res) => {
-    const user = await authService.login(req.body);
+    const {email, password} = req.body;
+    const ip = req.ip || req.headers["x-forwarded-for"] || req.connection.remoteAddress;
 
-    const {accessToken, refreshToken} = await sessionService.createSession(user.userId);
-    setCookies(res, accessToken, refreshToken);
+    // verifing rate limiting rules before login attempt
+    await loginRateLimiterService.verifyAccess(email, ip);
 
-    return res.status(200).json(new ApiResponse(200, {user}, "Log in successful"));
+    try {
+        // authenticate user
+        const user = await authService.login(email, password);
+
+        // after successful login, reset login attempts
+        await loginRateLimiterService.reset(email, ip);
+
+        // create session and set tokens
+        const {accessToken, refreshToken} = await sessionService.createSession(user.userId);
+
+        setCookies(res, accessToken, refreshToken);
+
+        return res.status(200).json(new ApiResponse(200, {user}, "Log in successful"));
+    } catch (error) {
+        // handle failed login attempts
+        await loginRateLimiterService.handleFailure(email, ip)
+        throw error;
+    }
 });
 
 const logout = asyncHandler(async(req, res) => {
@@ -72,7 +91,7 @@ const resetPassword = asyncHandler(async(req, res) => {
 
 export const authController = {
     register,
-    verfiyOtp,
+    verifyOtp,
     validateCredentials,
     login,
     logout,
