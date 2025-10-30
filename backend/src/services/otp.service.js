@@ -16,7 +16,7 @@ export const otpService = {
         return otp;
     },
 
-    async verfiyOtp (userId, otp) {
+    async verifyOtp (userId, otp) {
         const user = await userRepo.findById(userId);
         if(!user) throw new ApiError(404, "User not found");
 
