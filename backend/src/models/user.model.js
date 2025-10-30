@@ -21,9 +21,9 @@ const userSchema = new mongoose.Schema({
     },
 
     role: {
-        type: String,
-        enum: ["SUPER_ADMIN", "ADMIN", "EDITOR", "MEMBER"],
-        default: "MEMBER"
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Role",
+        required: true,
     },
 
     isEmailVerifed: {
