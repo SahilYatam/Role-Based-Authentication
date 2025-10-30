@@ -1,6 +1,7 @@
 import { userRepo } from "../repositories/user.repository.js";
 import { otpService } from "./otp.service.js";
 import { sessionRepo } from "../repositories/session.repository.js";
+import { Role } from "../models/role.model.js";
 import {
   logger,
   ApiError,
@@ -10,6 +11,9 @@ import {
   redisUtils,
 } from "../utils/index.js";
 
+const defaultRole = await Role.findOne({ key: process.env.ROLE_MEMBER });
+
+
 const toPublicUser = (user) => ({
     id: user._id,
     name: user.name,
@@ -18,11 +22,11 @@ const toPublicUser = (user) => ({
 });
 
 export const authService = {
-    async register (data) {
-        const userExists = await userRepo.findByEmail(data.email);
+    async register (email) {
+        const userExists = await userRepo.findByEmail(email);
         if(userExists) throw new ApiError(400, "Email already registered");
 
-        const user = await userRepo.createUser({email: data.email});
+        const user = await userRepo.createUser({email});
         await otpService.generateAndSend(user.email);
 
         logger.info(`📩 OTP sent to ${user.email}`);
@@ -34,17 +38,18 @@ export const authService = {
         const updatedUser = await userRepo.updateById(id, {
             name: data.name,
             password: hashedPassword,
-            isEmailVerified: true
+            isEmailVerified: true,
+            role: defaultRole._id
         });
 
         return toPublicUser(updatedUser)
     },
 
-    async login (data) {
-        const user = await userRepo.findByEmail(data.email);
+    async login (email, password) {
+        const user = await userRepo.findByEmail(email);
         if(!user) throw new ApiError(404, "User not found");
 
-        const isPasswordCorrect = await comparePassword(data.password, user.password);
+        const isPasswordCorrect = await comparePassword(password, user.password);
         if (!isPasswordCorrect) throw new ApiError(403, "Invalid password");
 
         return toPublicUser(user);
