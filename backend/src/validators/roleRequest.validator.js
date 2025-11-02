@@ -1,43 +1,32 @@
-// validations/roleRequest.validation.js
 import Joi from "joi";
 
 const objectIdPattern = /^[0-9a-fA-F]{24}$/;
 
-/**
- * applyRoleRequest
- * - req.body must contain `requestedRole`
- * - `requestedRole` may be:
- *    - a string role key (e.g. "admin"), OR
- *    - an object { id: "<ObjectId>", key: "<roleKey>" }
- */
 const applyRoleRequestSchema = Joi.object({
   requestedRole: Joi.alternatives()
     .try(
       Joi.string().trim().min(2).max(50),
       Joi.object({
-        id: Joi.string().trim().regex(objectIdPattern).messages({
-          "string.pattern.base": "requestedRole.id must be a valid MongoDB ObjectId",
-          "string.empty": "requestedRole.id cannot be empty",
+        id: Joi.string().trim().regex(objectIdPattern).required().messages({
+          "string.pattern.base": "Role ID must be a valid MongoDB ObjectId",
+          "string.empty": "Role ID cannot be empty",
+          "any.required": "Role ID is required",
         }),
         key: Joi.string().trim().min(2).max(50).required().messages({
-          "any.required": "requestedRole.key is required when requestedRole is an object",
-          "string.empty": "requestedRole.key cannot be empty",
-          "string.min": "requestedRole.key must be at least 2 characters",
-          "string.max": "requestedRole.key cannot exceed 50 characters",
+          "any.required": "Role key is required",
+          "string.empty": "Role key cannot be empty",
+          "string.min": "Role key must be at least 2 characters",
+          "string.max": "Role key cannot exceed 50 characters",
         }),
-      }).required()
+      }).label('requestedRole')
     )
     .required()
     .messages({
       "any.required": "requestedRole is required",
-      "alternatives.match": "requestedRole must be either a role key string or an object with { id, key }",
+      "alternatives.match": "requestedRole must be either a role key string or an object with id and key",
     }),
 });
 
-/**
- * approveRole
- * - req.params.requestId required and must be an ObjectId
- */
 const approveRoleSchema = Joi.object({
   requestId: Joi.string().trim().regex(objectIdPattern).required().messages({
     "any.required": "Request ID is required",
@@ -46,10 +35,6 @@ const approveRoleSchema = Joi.object({
   }),
 });
 
-/**
- * rejectRole
- * - req.params.requestId required and must be an ObjectId
- */
 const rejectRoleSchema = Joi.object({
   requestId: Joi.string().trim().regex(objectIdPattern).required().messages({
     "any.required": "Request ID is required",
@@ -58,10 +43,6 @@ const rejectRoleSchema = Joi.object({
   }),
 });
 
-/**
- * removeRequestNotification
- * - req.params.requestId required and must be an ObjectId
- */
 const removeRequestNotificationSchema = Joi.object({
   requestId: Joi.string().trim().regex(objectIdPattern).required().messages({
     "any.required": "Request ID is required",
@@ -71,8 +52,8 @@ const removeRequestNotificationSchema = Joi.object({
 });
 
 export const roleRequestValidate = {
-    applyRoleRequestSchema,
-    approveRoleSchema,
-    rejectRoleSchema,
-    removeRequestNotificationSchema
-}
+  applyRoleRequestSchema,
+  approveRoleSchema,
+  rejectRoleSchema,
+  removeRequestNotificationSchema,
+};

@@ -6,5 +6,5 @@ export const refreshAccessTokenSchema = Joi.object({
     'string.empty': 'Refresh token cannot be empty',
     'string.min': 'Refresh token must be at least 20 characters',
     'any.required': 'Refresh token is required',
-  }),
-});
+  })
+}).unknown(true)

@@ -9,8 +9,6 @@ const registerSchema = Joi.object({
     }),
 });
 
-import Joi from "joi";
-
 const verifyOtpSchema = {
   body: Joi.object({
     otp: Joi.string()
