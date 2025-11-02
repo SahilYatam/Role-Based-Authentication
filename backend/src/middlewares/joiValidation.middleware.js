@@ -1,61 +1,66 @@
-import Joi from "joi";
 
-const ALLOWED_PROPERTIES = ["body", "query", "params", "headers", "cookies"];
+const ALLOWED_PROPERTIES = ['body', 'query', 'params', 'headers', 'cookies'];
 
 const DEFAULT_JOI_OPTIONS = {
-    abortEarly: false,
-    stripUnknown: true,
-    errors: { wrap: { label: false } },
+  abortEarly: false,
+  stripUnknown: true,
+  errors: { wrap: { label: false } },
 };
 
 export const validateRequest = (schemas, properties = "body", joiOptions = {}) => {
-    const isSchemaObject = typeof schemas === "object" && !schemas.isJoi;
+  // Check if schemas is an object with multiple schemas or a single schema
+  const isSchemaObject = schemas && typeof schemas === 'object' && !schemas.isJoi;
+  
+  // Normalize properties to an array
+  const props = Array.isArray(properties) 
+    ? properties 
+    : isSchemaObject 
+      ? Object.keys(schemas).filter(key => ALLOWED_PROPERTIES.includes(key))
+      : [properties];
 
-    const props = Array.isArray(properties)
-        ? properties
-        : isSchemaObject
-            ? Object.keys(schemas)
-            : [properties];
+  // Validate properties
+  props.forEach(prop => {
+    if (!ALLOWED_PROPERTIES.includes(prop)) {
+      throw new Error(`Invalid property: ${prop}. Must be one of: ${ALLOWED_PROPERTIES.join(', ')}`);
+    }
+  });
 
-    props.forEach(prop => {
-        if (!ALLOWED_PROPERTIES.includes(prop)) {
-            throw new Error(`Invalid property: ${prop}. Must be one of: ${ALLOWED_PROPERTIES.join(", ")}`);
+  return (req, res, next) => {
+    try {
+      const validationOptions = { ...DEFAULT_JOI_OPTIONS, ...joiOptions };
+      const errorDetails = [];
+
+      for (const prop of props) {
+        // Get the appropriate schema
+        const schema = isSchemaObject ? schemas[prop] : schemas;
+        
+        if (!schema) continue;
+
+        const dataToValidate = req[prop] || {};
+        const { error, value } = schema.validate(dataToValidate, validationOptions);
+
+        if (error) {
+          errorDetails.push(...error.details.map(detail => ({
+            property: prop,
+            path: detail.path.join("."),
+            message: detail.message
+          })));
+        } else {
+          req[prop] = value;
         }
-    });
+      }
 
-    return async (req, res, next) => {
-        try {
-            const validationOptions = { ...DEFAULT_JOI_OPTIONS, ...joiOptions };
-            const errorDetails = [];
+      if (errorDetails.length) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Validation error', 
+          errors: errorDetails 
+        });
+      }
 
-            for (const prop of props) {
-                const schema = isSchemaObject ? schemas[prop] : schemas;
-                if (!schema) continue;
-
-                const { error, value } = await schema.validateAsync(req[prop] || {}, validationOptions);
-
-                if (error) {
-                    errorDetails.push(...error.details.map(detail => ({
-                        field: `${prop}.${detail.path.join(".")}`,
-                        message: detail.message
-                    })));
-                } else {
-                    req[prop] = value;
-                }
-            }
-
-            if (errorDetails.length) {
-                return res.status(400).json({
-                    success: false,
-                    statusCode: 400,
-                    message: "Validation error",
-                    errors: errorDetails
-                });
-            }
-
-            next();
-        } catch (err) {
-            next(err);
-        }
-    };
+      next();
+    } catch (err) {
+      next(err);
+    }
+  };
 };
