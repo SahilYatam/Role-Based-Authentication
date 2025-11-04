@@ -11,7 +11,9 @@ import { otpService } from "../services/otp.service.js";
 import { loginRateLimiterService } from "../services/loginRateLimiting.service.js";
 
 const register = asyncHandler(async(req, res) => {
-    const user = await authService.register(req.body);
+    const {email} = req.body;
+    const user = await authService.register(email);
+
     return res.status(200).json(new ApiResponse(200, {user}, "OTP sent successfully"));
 });
 
@@ -24,10 +26,10 @@ const verifyOtp = asyncHandler(async(req, res) => {
 })
 
 const validateCredentials = asyncHandler(async(req, res) => {
-    const id = req.user?._id;
-    const user = await authService.validateCredentials(id, req.body);
+    const {userId} = req.body;
+    const user = await authService.validateCredentials(userId, req.body);
 
-    const {accessToken, refreshToken} = await sessionService.createSession(user.userId);
+    const {accessToken, refreshToken} = await sessionService.createSession(userId);
     setCookies(res, accessToken, refreshToken);
     
     return res.status(201).json(new ApiResponse(201, {user}, "User created successfully"));
@@ -35,6 +37,7 @@ const validateCredentials = asyncHandler(async(req, res) => {
 
 const login = asyncHandler(async(req, res) => {
     const {email, password} = req.body;
+    
     const ip = req.ip || req.headers["x-forwarded-for"] || req.connection.remoteAddress;
 
     // verifing rate limiting rules before login attempt
@@ -48,7 +51,7 @@ const login = asyncHandler(async(req, res) => {
         await loginRateLimiterService.reset(email, ip);
 
         // create session and set tokens
-        const {accessToken, refreshToken} = await sessionService.createSession(user.userId);
+        const {accessToken, refreshToken} = await sessionService.createSession(user.id);
 
         setCookies(res, accessToken, refreshToken);
 
@@ -61,8 +64,11 @@ const login = asyncHandler(async(req, res) => {
 });
 
 const logout = asyncHandler(async(req, res) => {
-    const refreshToken = req.cookies.refreshToken
+    const refreshToken = req.cookies.refreshToken ||
+    req.body.refreshToken ||
+    req.headers['x-refresh-token'];
 
+    if (!refreshToken) throw new ApiError(401, "No refresh token provided");
     await authService.logout(refreshToken);
     clearCookies(res);
 
@@ -70,7 +76,7 @@ const logout = asyncHandler(async(req, res) => {
 });
 
 const getUser = asyncHandler(async(req, res) => {
-    const user = await authService.getUser(req.user?.id);
+    const user = await authService.getUser(req.user?._id);
     return res.status(200).json(new ApiResponse(200, {user}, "User details fetch successfully"));
 });
 
