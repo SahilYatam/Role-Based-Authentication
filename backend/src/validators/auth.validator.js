@@ -11,6 +11,15 @@ const registerSchema = Joi.object({
 
 const verifyOtpSchema = {
   body: Joi.object({
+
+    userId: Joi.string()
+      .required()
+      .messages({
+        "string.base": "User ID must be a string",
+        "string.empty": "User ID cannot be empty",
+        "any.required": "User ID is required",
+    }),
+
     otp: Joi.string()
       .trim()
       .length(6) // assuming a 6-digit OTP, change as needed
@@ -25,15 +34,6 @@ const verifyOtpSchema = {
       }),
   }),
 
-  params: Joi.object({
-    userId: Joi.string()
-      .required()
-      .messages({
-        "string.base": "User ID must be a string",
-        "string.empty": "User ID cannot be empty",
-        "any.required": "User ID is required",
-      }),
-  }),
 };
 
 
