@@ -3,11 +3,11 @@ import { Session } from "../models/session.model.js";
 const createSession = (payload) => Session.create(payload);
 
 const updateSessionById = async (id, updates) => {
-    Session.updateOne({_id: id}, {$set: updates});
+    return Session.updateOne({_id: id}, {$set: updates});
 }
 
 const findSession = async (filter) => {
-    Session.findOne(filter).lean();
+    return Session.findOne(filter).lean();
 }
 
 const deleteExpiredSessions = async (batchSize = 500) => {
