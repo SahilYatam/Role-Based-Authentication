@@ -18,7 +18,7 @@ router.post(
 
 router.post(
   "/verifyOtp",
-  validateRequest(authValidate.verifyOtpSchema, ["body", "params"]),
+  validateRequest(authValidate.verifyOtpSchema),
   authController.verifyOtp
 );
 
@@ -38,7 +38,7 @@ router.post(
 router.post(
   "/logout",
   authentication,
-  validateRequest(authValidate.logoutSchema),
+  validateRequest(authValidate.logoutSchema, "cookies"),
   authController.logout
 );
 
