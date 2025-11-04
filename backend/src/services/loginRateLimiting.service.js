@@ -2,8 +2,7 @@ import { loginAttemptRepo } from "../repositories/loginAttempt.repository.js";
 import { loginAttemptService } from "./loginAttempt.service.js";
 import { ApiError } from "../utils/index.js";
 
-const verifyAccess = async ({email, ip}) => {
-    email = email.toLowerCase().trim();
+const verifyAccess = async (email, ip) => {
     const attempt = await loginAttemptRepo.findByEmailAndIP(email, ip);
     if(!attempt) return;
 
