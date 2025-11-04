@@ -48,6 +48,7 @@ export const sessionService = {
             if(!token) throw new ApiError(401, "Unauthorized request");
 
             const hashedRefreshToken = hashToken(token);
+
             const redisKey = await redisUtils.findTokenKey(hashedRefreshToken);
 
             const userId = redisKey ? redisKey.split(":")[1] : null;
@@ -56,7 +57,6 @@ export const sessionService = {
                     ? { userId, refreshToken: hashedRefreshToken, isActive: true }
                     : { refreshToken: hashedRefreshToken, isActive: true }
             );
-
             if(!session) throw new ApiError(403, "Invalid or expired refresh token");
             if(new Date(session.expiresAt) < new Date()){
                 throw new ApiError(403, "Session expired");
@@ -76,7 +76,6 @@ export const sessionService = {
                 })
             ]);
 
-            logger.info(`🔁 Rotated refresh token for user ${session.userId}`);
             return { accessToken, refreshToken: newRawRefreshToken };
         } catch (error) {
             logger.error("Error in refreshAccessToken", { message: error.message });
