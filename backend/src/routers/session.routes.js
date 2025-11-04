@@ -1,13 +1,16 @@
 import { Router } from "express";
-import {refreshAccessToken} from "../controllers/session.controller.js";
+import { refreshAccessToken } from "../controllers/session.controller.js";
 
 import { validateRequest } from "../middlewares/joiValidation.middleware.js";
 import { refreshAccessTokenSchema } from "../validators/session.validator.js";
 
-import { authentication } from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
-router.post("/refresh-accessToken", authentication, validateRequest(refreshAccessTokenSchema), refreshAccessToken);
+router.post(
+  "/refresh-accessToken",
+  validateRequest(refreshAccessTokenSchema, "cookies"),
+  refreshAccessToken
+);
 
 export default router;
