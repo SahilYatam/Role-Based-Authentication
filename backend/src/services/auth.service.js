@@ -29,13 +29,12 @@ export const authService = {
         const user = await userRepo.createUser({email});
         await otpService.generateAndSend(user.email);
 
-        logger.info(`📩 OTP sent to ${user.email}`);
         return { userId: user._id, email: user.email };
     },
 
-    async validateCredentials (id, data) {
-        const hashedPassword = await hashPassword(data.hashPassword);
-        const updatedUser = await userRepo.updateById(id, {
+    async validateCredentials (userId, data) {
+        const hashedPassword = await hashPassword(data.password);
+        const updatedUser = await userRepo.updateById(userId, {
             name: data.name,
             password: hashedPassword,
             isEmailVerified: true,
@@ -57,10 +56,9 @@ export const authService = {
 
     async logout (refreshToken) {
         const hashedToken = hashToken(refreshToken);
-        const session = await sessionRepo.findSession({
-            refreshToken: hashedToken,
-            isActive: true
-        });
+        const session = await sessionRepo.findSession({ refreshToken: hashedToken, isActive: true });
+        logger.info("Found session:", session);
+
 
         if(!session) throw new ApiError(403, "Unauthorized request");
         await sessionRepo.updateSessionById(session._id, {isActive: false});
