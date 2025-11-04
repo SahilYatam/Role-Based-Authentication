@@ -9,7 +9,7 @@ export const authentication = async (req, res, next) => {
 
         const accessToken = req.cookies.accessToken || tokenFromHeader;
 
-        if(accessToken) {
+        if(!accessToken) {
             throw new ApiError(401, "Unauthorized - No access token provided");
         }
 
