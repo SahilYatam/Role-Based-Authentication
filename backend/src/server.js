@@ -1,9 +1,12 @@
-import { app } from "./app.js";
+import dotenv from "dotenv";
+dotenv.config();
+
+import { app, loadRoutes } from "./app.js";
 import logger from "./utils/monitoring/logger.js";
 import { connectDB } from "./config/db.js";
 import { connectRabbitMQ } from "./config/rabbitMq.config.js";
+import { startConsumer } from "./message-broker/consumer.js";
 import mongoose from "mongoose";
-import initRoles from "./services/role.service.js";
 
 // Ensure all logger transports are flushed before exit
 const shutdownLogger = async () => {
@@ -16,26 +19,49 @@ const shutdownLogger = async () => {
     });
 };
 
+
 let httpServer;
 let isShuttingDown = false;
-let SHUTDOWN_TIMEOUT = 1000;
-
-let port = process.env.PORT || 8000;
+let isServerReady = false; // 
+const SHUTDOWN_TIMEOUT = 10000; 
+const port = process.env.PORT || 8000;
 
 const startServer = async () => {
     try {
         logger.info(`🔌 Connecting DB...`);
-
         await connectDB();
-        await connectRabbitMQ();
+
+        // Wating for Mongoose's internal connection to be ready
+        await new Promise((resolve) => {
+            if(mongoose.connection.readyState === 1) {
+                return resolve();
+            }
+            mongoose.connection.once("connected", resolve);
+        })
+
+        // Lazy import after DB connection
+        const { default: initRoles } = await import("./services/role.service.js");
+        
+        logger.info(`🚀 Seeding default roles...`);
         await initRoles();
+        logger.info(`✅ Roles seeded successfully`);
+
+        logger.info(`📁 Loading routes...`);
+        await loadRoutes();
+        logger.info(`✅ Routes loaded`);
+        
+        const {ensureUniqueSuperAdminIndex} = await import("./startup/setupIndexes.js");
+        await ensureUniqueSuperAdminIndex();
+        logger.info(`✅ enforce unique SuperAdmin constraint successfully`);
+
+        logger.info(`📨 Connecting RabbitMQ...`);
+        await connectRabbitMQ();
+        await startConsumer();
 
         httpServer = await new Promise((resolve, reject) => {
             const server = app.listen(port, () => {
-                isServerReady = true; // server + db ready
-                logger.info(
-                    `🚀 Server is running on PORT: ${port}`
-                );
+                isServerReady = true;
+                logger.info(`🚀 Server is running on PORT: ${port}`);
                 resolve(server);
             });
 
@@ -46,8 +72,8 @@ const startServer = async () => {
         });
     } catch (error) {
         logger.error(`❌ Server startup error ${error.message}\n${error.stack}`);
-        if (exitOnError) process.exit(1);
-        throw error;
+        process.exit(1); // ← Removed exitOnError variable
+        throw error; 
     }
 }
 
@@ -58,7 +84,7 @@ const gracefulShutdown = async (signal) => {
     if(isShuttingDown){
         logger.info("⚠️ Shutdown already in progress, ignoring signal");
         return;
-    };
+    }
 
     isShuttingDown = true;
     logger.info(`🛑 Shutting down Server (${signal})...`);

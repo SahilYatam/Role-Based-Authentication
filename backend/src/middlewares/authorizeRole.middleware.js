@@ -4,10 +4,11 @@ import { ApiError } from "../utils/index.js"
 export const authorizeRole = (...allowedKeys) => {
     return async (req, res, next) => {
         try {
-            const userId = req.user?.userId;
-            if(userId) throw new ApiError(401, "Unauthorized access");
+            const userId = req.user?._id;
+            if(!userId) throw new ApiError(401, "Unauthorized access");
 
             const user = await userRepo.findByIdWithRole(userId);
+
             if(!user || !user.role) throw new ApiError(403, "Access denied");
 
             const roleKey = user.role.key; // immutable, controlled in DB
@@ -15,6 +16,8 @@ export const authorizeRole = (...allowedKeys) => {
             if(!allowedKeys.includes(roleKey)){
                 throw new ApiError(403, "Insufficient privileges");
             }
+
+            req.user = user;
 
             next();
         } catch (err) {
@@ -25,7 +28,8 @@ export const authorizeRole = (...allowedKeys) => {
 
 export const authorizePermission = (permissionPath) => {
     return async (req, res, next) => {
-        const user = await userRepo.findByIdWithRole(req.user.userId);
+        console.log("🔍 Checking permission for:", permissionPath);
+        const user = await userRepo.findByIdWithRole(req.user._id);
         if(!user?.role?.permissions){
             throw new ApiError(403, "Access denied");
         }
@@ -33,6 +37,7 @@ export const authorizePermission = (permissionPath) => {
         const hasPermission = permissionPath
             .split(".")
             .reduce((obj, key) => obj?.[key], user.role.permissions);
+
         
         if(!hasPermission) throw new ApiError(403, "Permission denied");
 

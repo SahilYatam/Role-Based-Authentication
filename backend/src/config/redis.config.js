@@ -1,11 +1,8 @@
-import Redis from "ioredis"
+import { Redis } from "@upstash/redis";
 
 const redis = new Redis({
-    port: process.env.REDIS_PORT,
-    host: process.env.REDIS_HOST,
-    username: process.env.REDIS_USERNAME,
-    password: process.env.REDIS_PASSWORD,
-    db: 0
+    url: process.env.UPSTASH_REDIS_REST_URL,
+    token: process.env.UPSTASH_REDIS_REST_TOKEN,
 });
 
-export {redis};
+export { redis };

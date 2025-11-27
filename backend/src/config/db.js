@@ -46,6 +46,7 @@ export const connectDB = async () => {
       if (attempt === maxRetries) {
         logger.error("❌ All connection attempts failed");
         throw new Error(`Failed to connect to MongoDB after ${maxRetries} attempts: ${error.message}`);
+        // attempt = 0;
       }
 
       logger.info(`⏳ Retrying in ${retryDelay}ms...`);

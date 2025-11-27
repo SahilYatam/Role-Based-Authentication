@@ -1,11 +1,14 @@
+import { Role } from "../models/role.model.js";
 import { User } from "../models/user.model.js";
 
 const findByEmail = (email) => {
     const userEmail = email.toLowerCase().trim();
-    return User.findOne({email: userEmail}).lean();
+    return User.findOne({email: userEmail}).populate('role').lean();
 }
 const findById = (id) => {
-    return User.findById(id).lean()
+    return User.findById(id)
+        .populate("role", "key name")
+        .lean()
 };
 
 const createUser = (data) => {
@@ -26,13 +29,31 @@ const findByResetToken = (token) => {
     return User.findOne({resetPasswordToken: token})
 };
 
-const assignRoleToUser = (userId, roleId) =>{
+const updateUserRole = (userId, roleId) =>{
     return User.findByIdAndUpdate(userId, 
         { role: roleId }, 
         { new: true })
         .populate("role")
 };
 
+const findUserByRoleKey = async (roleKey) => {
+    const role = await Role.findOne({key: roleKey});
+    if(!role){
+        return [];
+    }
+
+    return User.find({role: role._id})
+        .populate("role", "key name")
+        .select("name email role") 
+        .lean();
+}
+
+const findAllUserWithRoles = () => {
+    return User.find()
+        .populate("role", "key name")
+        .select("name role")
+        .lean();
+}
 
 export const userRepo = {
     findByEmail,
@@ -41,5 +62,7 @@ export const userRepo = {
     createUser,
     updateById,
     findByResetToken,
-    assignRoleToUser
+    updateUserRole,
+    findUserByRoleKey,
+    findAllUserWithRoles
 };

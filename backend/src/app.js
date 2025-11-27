@@ -1,24 +1,23 @@
+import dotenv from "dotenv"
+dotenv.config()
 import express from "express";
 import helmet from "helmet";
 import cors from "cors";
 import morgan from "morgan";
 import cookieParser from "cookie-parser";
 import rateLimit from "express-rate-limit";
+
 import { errorHandler, notFoundHandler } from "./middlewares/globalErrorHandler.js";
-
-import authRouter from "./routers/auth.routes.js"
-import sessionRouter from "./routers/session.routes.js"
-import taskRouter from "./routers/task.routes.js"
-import roleRouter from "./routers/role.routes.js"
-import roleRequestRouter from "./routers/roleRequest.routes.js"
-
 
 import { httpRequestsDuration, register } from "./utils/monitoring/metrics.js";
 
 const app = express();
 
 app.use(helmet());
-app.use(cors());
+app.use(cors({
+    origin: "http://localhost:5173",
+    credentials: true
+}))
 app.use(morgan("dev"));
 app.use(express.json({limit: "20kb"}));
 app.use(express.urlencoded({extended: true}));
@@ -34,7 +33,7 @@ function limiter (windowMs, max) {
     });
 }
 
-app.set("trust proxy", true);
+app.set("trust proxy", 1);
 
 // global limiter, applies to all routes
 const globalRateLimiting = limiter(15 * 60 * 1000, 1000) // 15 minutes, 1000 requests
@@ -44,11 +43,25 @@ const authLimiter = limiter(15 * 60 * 1000, 100);
 const sessionLimiter = limiter(15 * 60 * 1000, 100);
 const roleLimiter = limiter(15 * 60 * 1000, 500);
 
-app.use("/api/v1/auth", authLimiter, authRouter);
-app.use("/api/v1/session", sessionLimiter, sessionLimiter);
-app.use("/api/v1/task", globalRateLimiting, taskRouter);
-app.use("/api/v1/role", roleLimiter, roleRouter);
-app.use("/api/v1/roleRequest", roleLimiter, roleRequestRouter);
+// LAZY LOAD ROUTES - Importing dynamically
+const loadRoutes = async () => {
+    const authRouter = (await import("./routers/auth.routes.js")).default;
+    const userRouter = (await import("./routers/user.routes.js")).default;
+    const sessionRouter = (await import("./routers/session.routes.js")).default;
+    const taskRouter = (await import("./routers/task.routes.js")).default;
+    const roleRouter = (await import("./routers/role.routes.js")).default;
+    const roleRequestRouter = (await import("./routers/roleRequest.routes.js")).default;
+
+    app.use("/api/v1/auth", authLimiter, authRouter);
+    app.use("/api/v1/user", authLimiter, userRouter);
+    app.use("/api/v1/session", sessionLimiter, sessionRouter);
+    app.use("/api/v1/task", globalRateLimiting, taskRouter);
+    app.use("/api/v1/role", roleLimiter, roleRouter);
+    app.use("/api/v1/roleRequest", roleLimiter, roleRequestRouter);
+
+    app.use(errorHandler);
+    app.use(notFoundHandler);
+};
 
 
 // --- Metrics middleware ---
@@ -71,10 +84,6 @@ app.get("/metrics", async(req, res) => {
 });
 
     // --- Health check endpoints ---
-app.get("/health", (req, res) => res.status(200).json({ status: "ok", service: serviceName }));
+app.get("/health", (req, res) => res.status(200).json({ status: "ok" }));
 
-
-app.use(errorHandler);
-app.use(notFoundHandler);
-
-export {app}
+export {app, loadRoutes}

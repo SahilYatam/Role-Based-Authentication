@@ -50,10 +50,8 @@ router.post(
 
 router.post(
   "/reset-password/:token",
-  validateRequest(authValidate.resetPasswordSchema, ["body", "params"]),
+//   validateRequest(authValidate.resetPasswordSchema, ["body", "params"]),
   authController.resetPassword
 );
-
-router.get("/user", authentication, authController.getUser);
 
 export default router;

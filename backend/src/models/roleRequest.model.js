@@ -22,7 +22,6 @@ const roleRequestchema = new mongoose.Schema({
     reviewedBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
-        required: true,
     },
 
 }, {timestamps: true});

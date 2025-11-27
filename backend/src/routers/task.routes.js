@@ -24,7 +24,7 @@ router.patch(
   taskController.updateTask
 );
 
-router.post(
+router.patch(
   "/mark-complete-task/:id",
   authentication,
   validateRequest(taskValidate.taskIdParamSchema, "params"),
@@ -34,8 +34,6 @@ router.post(
 router.get("/all-task", taskController.getAllTask);
 
 router.get("/get-complete-task", taskController.getCompletedTasks);
-
-router.get("/user-complete-task", taskController.getUserCompletedTasks);
 
 router.delete(
   "/delete-task/:id",

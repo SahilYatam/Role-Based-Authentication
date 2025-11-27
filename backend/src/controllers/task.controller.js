@@ -3,7 +3,8 @@ import { taskService } from "../services/task.service.js";
 
 const createTask = asyncHandler(async (req, res) => {
   const uesrId = req.user?._id;
-  const task = await taskService.createTask(uesrId, req.body);
+  const {taskName, taskDescription} = req.body
+  const task = await taskService.createTask(uesrId, taskName, taskDescription);
   return res.status(201).json(new ApiResponse(201, { task }, "Task created"));
 });
 
@@ -17,10 +18,10 @@ const updateTask = asyncHandler(async (req, res) => {
 
 const deleteTask = asyncHandler(async (req, res) => {
   const id = req.params.id;
-  const deletedTask = await taskService.deleteTask(id);
+  await taskService.deleteTask(id);
   return res
     .status(200)
-    .json(new ApiResponse(200, { deletedTask }, "Task deleted"));
+    .json(new ApiResponse(200, {}, "Task deleted"));
 });
 
 const getAllTask = asyncHandler(async (req, res) => {
@@ -39,7 +40,7 @@ const markTaskAsCompleted = asyncHandler(async (req, res) => {
     .json(
       new ApiResponse(
         200,
-        { completedTask },
+        { task: completedTask },
         "Task marked as completed successfully."
       )
     );
@@ -59,27 +60,11 @@ const getCompletedTasks = asyncHandler(async (req, res) => {
     .json(
       new ApiResponse(
         200,
-        { completedTasks },
+        { task: completedTasks },
         "All completed tasks retrieved successfully."
       )
     );
 });
-
-const getUserCompletedTasks = asyncHandler(async(req, res) => {
-    const userId = req.user?._id;
-
-    const completedTasks = await taskService.getUserCompletedTasks(userId);
-
-    if(completedTasks.message) {
-        return res.status(200)
-                .json(new ApiResponse(200, {}, completedTasks.message));
-    }
-
-    return res
-        .status(200)
-        .json(new ApiResponse(200, {completedTasks}, "Your completed tasks fetched successfully"));
-
-})
 
 export const taskController = {
   createTask,
@@ -87,6 +72,5 @@ export const taskController = {
   deleteTask,
   getAllTask,
   markTaskAsCompleted,
-  getCompletedTasks,
-  getUserCompletedTasks
+  getCompletedTasks
 };

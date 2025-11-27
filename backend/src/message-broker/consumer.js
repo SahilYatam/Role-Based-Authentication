@@ -16,7 +16,6 @@ export const startConsumer = async () => {
 
             try {
                 const data = JSON.parse(msg.content.toString());
-                logger.info(`📩 Message from ${queue}: ${JSON.stringify(data)}`);
 
                 if(queue === "otpQueue" && data.type === "OTP_EMAIL"){
                     await sendOtpEmail(data.email, data.otp);
@@ -33,6 +32,4 @@ export const startConsumer = async () => {
 
         })
     }
-
-
 }

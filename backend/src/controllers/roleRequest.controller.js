@@ -6,15 +6,30 @@ import {
 
 const applyRoleRequest = asyncHandler(async(req, res) => {
     const userId = req.user?._id;
-    const requestedRole = await roleRequestService.applyRoleRequest(userId, req.body);
-    return res.status(200).json(new ApiResponse(200, requestedRole, "Role request sent successfully"));
+    const {requestedRole} = req.body;
+    const roleKey = requestedRole.toUpperCase().trim()
+    console.log("requestedRole: ", roleKey)
+    const requestedRoleByUser = await roleRequestService.applyRoleRequest(userId, roleKey);
+    console.log("requestedRoleByUser: ", requestedRoleByUser)
+    return res.status(200).json(new ApiResponse(200, {roleRequested: requestedRoleByUser}, "Role request sent successfully"));
 });
+
+const getRoleRequest = asyncHandler(async(req, res) => {
+    const requestedRoles = await roleRequestService.getRoleRequest()
+    const message =
+    requestedRoles.length === 0
+    ? "No role requests found"
+    : "Role requests retrieved successfully";
+
+    return res.status(200).json(new ApiResponse(200, {requestedRoles}, message));
+})
 
 const approveRole = asyncHandler(async(req, res) => {
     const requestId = req.params.requestId;
+    const approverRole = req.user.role.key;
     const approvalId = req.user?._id;
-
-    const approvedRole = await roleRequestService.approveRole(requestId, approvalId);
+    
+    const approvedRole = await roleRequestService.approveRole(requestId,approverRole, approvalId);
 
     return res.status(200)
         .json(new ApiResponse(200, approvedRole, "Role request has been successfully approved and assigned to the user"));
@@ -22,25 +37,18 @@ const approveRole = asyncHandler(async(req, res) => {
 
 const rejectRole = asyncHandler(async(req, res) => {
     const requestId = req.params.requestId;
+    const rejecterRole = req.user.role.key;
     const rejecterId = req.user?._id;
 
-    const {rejectedRole, message} = await roleRequestService.rejectRoleRequest(requestId, rejecterId);
+    const {rejectedRole, message} = await roleRequestService.rejectRoleRequest(requestId, rejecterRole, rejecterId);
 
     return res.status(200)
         .json(new ApiResponse(200, rejectedRole, message));
 });
 
-const removeRequestNotification = asyncHandler(async(req, res) => {
-    const requestId = req.params.requestId;
-    const deletedRoleRequest = await roleRequestService.removeRequestNotification(requestId);
-
-    return res.status(200)
-        .json(new ApiResponse(200, deletedRoleRequest, "Role request notification has been successfully removed"));
-})
-
 export const roleRequestController = {
     applyRoleRequest,
+    getRoleRequest,
     approveRole,
     rejectRole,
-    removeRequestNotification
 }

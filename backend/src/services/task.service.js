@@ -1,13 +1,12 @@
-import { Task } from "../models/task.model.js";
 import { taskRepo } from "../repositories/task.repository.js";
-import { logger, ApiError } from "../utils/index.js";
+import { ApiError } from "../utils/index.js";
 
 export const taskService = {
-    async createTask (userId, data) {
+    async createTask (userId, taskName, taskDescription) {
         const task = await taskRepo.createTask({ 
             userId, 
-            taskName: data.taskName, 
-            taskDescription: data.taskDescription
+            taskName,
+            taskDescription
         });
 
         return task;
@@ -46,14 +45,4 @@ export const taskService = {
 
         return filteredTasks;
     },
-
-    async getUserCompletedTasks (userId){
-        const completedTasks = await taskRepo.findCompletedTasksByUserId(userId);
-
-        if(completedTasks.length === 0){
-            return {message: "You haven't completed any tasks yet."};
-        }
-        return completedTasks;
-    }
-
 }

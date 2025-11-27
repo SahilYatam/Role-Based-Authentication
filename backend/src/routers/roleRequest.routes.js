@@ -12,40 +12,36 @@ import { roleRequestValidate } from "../validators/roleRequest.validator.js";
 const router = Router();
 
 router.post(
-  "/apply-roleRequest",
-  authentication,
-  validateRequest(roleRequestValidate.applyRoleRequestSchema),
-  roleRequestController.applyRoleRequest
+    "/apply-roleRequest",
+    authentication,
+    validateRequest(roleRequestValidate.applyRoleRequestSchema),
+    roleRequestController.applyRoleRequest
+);
+
+router.get(
+    "/get-role-request",
+    authentication,
+    authorizeRole(process.env.ROLE_SUPER_ADMIN, process.env.ROLE_ADMIN),
+    authorizePermission("adminPanelAccess"),
+    roleRequestController.getRoleRequest
+)
+
+router.post(
+    "/approve-role/:requestId",
+    authentication,
+    authorizeRole(process.env.ROLE_SUPER_ADMIN, process.env.ROLE_ADMIN),
+    authorizePermission("adminPanelAccess"),
+    validateRequest(roleRequestValidate.approveRoleSchema, "params"),
+    roleRequestController.approveRole
 );
 
 router.post(
-  "/approve-role/:requestId",
-  authentication,
-  authorizeRole(process.env.ROLE_SUPER_ADMIN, process.env.ROLE_ADMIN),
-  authorizePermission("adminPanelAccess"),
-  validateRequest(roleRequestValidate.approveRoleSchema, "params"),
-  roleRequestController.approveRole
-);
-
-router.post(
-  "/reject-role/:requestId",
-  authentication,
-  authorizeRole(process.env.ROLE_SUPER_ADMIN, process.env.ROLE_ADMIN),
-  authorizePermission("adminPanelAccess"),
-  validateRequest(roleRequestValidate.rejectRoleSchema, "params"),
-  roleRequestController.rejectRole
-);
-
-router.post(
-  "/removeRequest-notification/:requestId",
-  authentication,
-  authorizeRole(process.env.ROLE_SUPER_ADMIN, process.env.ROLE_ADMIN),
-  authorizePermission("adminPanelAccess"),
-  validateRequest(
-    roleRequestValidate.removeRequestNotificationSchema,
-    "params"
-  ),
-  roleRequestController.removeRequestNotification
+    "/reject-role/:requestId",
+    authentication,
+    authorizeRole(process.env.ROLE_SUPER_ADMIN, process.env.ROLE_ADMIN),
+    authorizePermission("adminPanelAccess"),
+    validateRequest(roleRequestValidate.rejectRoleSchema, "params"),
+    roleRequestController.rejectRole
 );
 
 export default router;

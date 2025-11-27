@@ -9,6 +9,7 @@ import { sessionService } from "../services/session.service.js";
 import { passwordService } from "../services/password.service.js";
 import { otpService } from "../services/otp.service.js";
 import { loginRateLimiterService } from "../services/loginRateLimiting.service.js";
+import {logger} from "../utils/index.js";
 
 const register = asyncHandler(async(req, res) => {
     const {email} = req.body;
@@ -75,25 +76,23 @@ const logout = asyncHandler(async(req, res) => {
     return res.status(200).json(new ApiResponse(200, {}, "Logged out successful"))
 });
 
-const getUser = asyncHandler(async(req, res) => {
-    const user = await authService.getUser(req.user?._id);
-    return res.status(200).json(new ApiResponse(200, {user}, "User details fetch successfully"));
-});
-
 const forgetPasswordRequest = asyncHandler(async(req, res) => {
-    const {message} = await passwordService.requestReset(req.body);
+    const {message} = await passwordService.requestReset(req.body.email);
     return res.status(200).json(new ApiResponse(200, {}, message));
 });
 
 const resetPassword = asyncHandler(async(req, res) => {
     const token = req.params.token;
+    
+    const {password} = req.body
 
-    const user = await passwordService.resetPassword(token, req.body);
+    const user = await passwordService.resetPassword(token, password);
 
     logger.info("Password reset successful from this user:", { userId: user.userId });
 
     return res.status(200).json(new ApiResponse(200, {}, "Password reset successfull"));
 });
+
 
 export const authController = {
     register,
@@ -101,7 +100,6 @@ export const authController = {
     validateCredentials,
     login,
     logout,
-    getUser,
     forgetPasswordRequest,
     resetPassword
 }
