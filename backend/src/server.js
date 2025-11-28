@@ -1,12 +1,9 @@
-import dotenv from "dotenv";
-dotenv.config();
-
+import { connectDB } from "./config/db.js";
+import mongoose from "mongoose";
 import { app, loadRoutes } from "./app.js";
 import logger from "./utils/monitoring/logger.js";
-import { connectDB } from "./config/db.js";
 import { connectRabbitMQ } from "./config/rabbitMq.config.js";
 import { startConsumer } from "./message-broker/consumer.js";
-import mongoose from "mongoose";
 
 // Ensure all logger transports are flushed before exit
 const shutdownLogger = async () => {
@@ -23,17 +20,23 @@ const shutdownLogger = async () => {
 let httpServer;
 let isShuttingDown = false;
 let isServerReady = false; // 
-const SHUTDOWN_TIMEOUT = 10000; 
+const SHUTDOWN_TIMEOUT = 10000;
 const port = process.env.PORT || 8000;
 
 const startServer = async () => {
     try {
+
         logger.info(`🔌 Connecting DB...`);
         await connectDB();
 
+        process.on("exit", (code) => {
+            console.log("🔥 PROCESS EXITING WITH CODE:", code);
+        });
+
+
         // Wating for Mongoose's internal connection to be ready
         await new Promise((resolve) => {
-            if(mongoose.connection.readyState === 1) {
+            if (mongoose.connection.readyState === 1) {
                 return resolve();
             }
             mongoose.connection.once("connected", resolve);
@@ -41,7 +44,7 @@ const startServer = async () => {
 
         // Lazy import after DB connection
         const { default: initRoles } = await import("./services/role.service.js");
-        
+
         logger.info(`🚀 Seeding default roles...`);
         await initRoles();
         logger.info(`✅ Roles seeded successfully`);
@@ -49,8 +52,8 @@ const startServer = async () => {
         logger.info(`📁 Loading routes...`);
         await loadRoutes();
         logger.info(`✅ Routes loaded`);
-        
-        const {ensureUniqueSuperAdminIndex} = await import("./startup/setupIndexes.js");
+
+        const { ensureUniqueSuperAdminIndex } = await import("./startup/setupIndexes.js");
         await ensureUniqueSuperAdminIndex();
         logger.info(`✅ enforce unique SuperAdmin constraint successfully`);
 
@@ -72,16 +75,13 @@ const startServer = async () => {
         });
     } catch (error) {
         logger.error(`❌ Server startup error ${error.message}\n${error.stack}`);
-        process.exit(1); // ← Removed exitOnError variable
-        throw error; 
+        await gracefulShutdown("STARTUP_FAILURE");
     }
 }
 
-startServer();
-
 // Graceful shutdown
 const gracefulShutdown = async (signal) => {
-    if(isShuttingDown){
+    if (isShuttingDown) {
         logger.info("⚠️ Shutdown already in progress, ignoring signal");
         return;
     }
@@ -95,12 +95,12 @@ const gracefulShutdown = async (signal) => {
     }, SHUTDOWN_TIMEOUT);
 
     try {
-        if(httpServer){
+        if (httpServer) {
             await new Promise((resolve) => httpServer.close(() => resolve()));
             logger.info("🛑 HTTP server closed");
         }
 
-        if(mongoose.connection.readyState === 1){
+        if (mongoose.connection.readyState === 1) {
             await mongoose.disconnect();
             logger.info("🔌 MongoDB connection closed")
         }
@@ -117,7 +117,7 @@ const gracefulShutdown = async (signal) => {
 }
 
 const handleFatalError = async (type, error) => {
-    if(isShuttingDown) return;
+    if (isShuttingDown) return;
     logger.error(`🚨 ${type.toUpperCase()} ${error.message}`);
     logger.error(error.stack);
     await gracefulShutdown(type);
@@ -137,3 +137,6 @@ process.once("SIGQUIT", () => gracefulShutdown("SIGQUIT"));
 process.on("exit", (code) => {
     if (!isShuttingDown) logger.info(`Server exiting with code ${code}`);
 });
+
+startServer();
+

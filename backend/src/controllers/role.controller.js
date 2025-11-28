@@ -3,7 +3,6 @@ import { roleService } from "../services/role.service.js";
 
 const getRoleByKey = asyncHandler(async(req, res) => {
     const key = req.params.key;
-    console.log("key:", key)
     const role = await roleService.getRoleByKey(key);
 
     return res.status(200).json(new ApiResponse(200, role, "Role fetehed successfully"));

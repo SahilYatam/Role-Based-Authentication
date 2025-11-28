@@ -28,7 +28,6 @@ export const authorizeRole = (...allowedKeys) => {
 
 export const authorizePermission = (permissionPath) => {
     return async (req, res, next) => {
-        console.log("🔍 Checking permission for:", permissionPath);
         const user = await userRepo.findByIdWithRole(req.user._id);
         if(!user?.role?.permissions){
             throw new ApiError(403, "Access denied");

@@ -8,9 +8,7 @@ const applyRoleRequest = asyncHandler(async(req, res) => {
     const userId = req.user?._id;
     const {requestedRole} = req.body;
     const roleKey = requestedRole.toUpperCase().trim()
-    console.log("requestedRole: ", roleKey)
     const requestedRoleByUser = await roleRequestService.applyRoleRequest(userId, roleKey);
-    console.log("requestedRoleByUser: ", requestedRoleByUser)
     return res.status(200).json(new ApiResponse(200, {roleRequested: requestedRoleByUser}, "Role request sent successfully"));
 });
 
