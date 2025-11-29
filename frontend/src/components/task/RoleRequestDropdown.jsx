@@ -11,7 +11,7 @@ const RoleRequestDropdown = ({ onRequestRole }) => {
     };
 
     return (
-        <div className="mb-6 p-4 bg-linear-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20 rounded-lg">
+        <div className="mb-6 p-4 bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20 rounded-lg">
             <div className="flex items-center justify-between">
                 <div>
                     <h3 className="text-white font-semibold mb-1">Want more access?</h3>
@@ -20,7 +20,7 @@ const RoleRequestDropdown = ({ onRequestRole }) => {
                 <div className="relative">
                     <Button
                         onClick={() => setShowDropdown(!showDropdown)}
-                        className="px-4 py-2 bg-linear-to-r from-purple-500 to-pink-500 text-white rounded-lg font-semibold hover:from-purple-600 hover:to-pink-600 transition-all flex items-center gap-2"
+                        className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-semibold hover:from-purple-600 hover:to-pink-600 transition-all flex items-center gap-2"
                     >
                         Request Role
                         <ChevronDown className={`w-4 h-4 transition-transform ${showDropdown ? 'rotate-180' : ''}`} />
@@ -39,7 +39,7 @@ const RoleRequestDropdown = ({ onRequestRole }) => {
                                 </div>
                             </Button>
                             <div className="border-t border-white/10"></div>
-                            <Button
+                            <button
                                 onClick={() => handleRoleRequest('Admin')}
                                 className="w-full px-4 py-3 text-left text-white hover:bg-purple-500/20 transition-all flex items-center gap-2"
                             >
@@ -48,7 +48,7 @@ const RoleRequestDropdown = ({ onRequestRole }) => {
                                     <p className="font-semibold text-sm">Admin Role</p>
                                     <p className="text-xs text-gray-400">Full access to manage tasks</p>
                                 </div>
-                            </Button>
+                            </button>
                         </div>
                     )}
                 </div>

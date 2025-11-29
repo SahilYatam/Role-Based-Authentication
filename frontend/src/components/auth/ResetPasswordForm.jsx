@@ -1,8 +1,13 @@
 import { useState } from "react"
+import Input from "../ui/Input.jsx";
+import Button from "../ui/Button.jsx";
+import { Eye, EyeOff } from "lucide-react";
 
 const ResetPasswordForm = ({ onSubmit, loading = false }) => {
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [errors, setErrors] = useState({});
 
     const validateForm = () => {
@@ -26,37 +31,55 @@ const ResetPasswordForm = ({ onSubmit, loading = false }) => {
 
     const handleSubmit = () => {
         if (validateForm()) {
-            onSubmit(password);
+            onSubmit({password});
         }
     }
 
     return (
         <div className="space-y-5">
-            <Input
-                type="password"
-                label="New Password"
-                value={password}
-                onChange={(e) => {
-                    setPassword(e.target.value);
-                    if (errors.password) setErrors({ ...errors, password: '' });
-                }}
-                placeholder="Enter new password"
-                error={errors.password}
-                required
-            />
+            <div className="relative">
+                <Input
+                    type={showPassword ? "text" : "password"}
+                    label="New Password"
+                    value={password}
+                    onChange={(e) => {
+                        setPassword(e.target.value);
+                        if (errors.password) setErrors({ ...errors, password: '' });
+                    }}
+                    placeholder="Enter new password"
+                    error={errors.password}
+                    required
+                />
+                <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-11 text-gray-400 hover:text-gray-300 transition-colors"
+                >
+                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+            </div>
 
-            <Input
-                type="password"
-                label="Confirm New Password"
-                value={confirmPassword}
-                onChange={(e) => {
-                    setConfirmPassword(e.target.value);
-                    if (errors.confirmPassword) setErrors({ ...errors, confirmPassword: '' });
-                }}
-                placeholder="Confirm new password"
-                error={errors.confirmPassword}
-                required
-            />
+            <div className="relative">
+                <Input
+                    type={showConfirmPassword ? "text" : "password"}
+                    label="Confirm New Password"
+                    value={confirmPassword}
+                    onChange={(e) => {
+                        setConfirmPassword(e.target.value);
+                        if (errors.confirmPassword) setErrors({ ...errors, confirmPassword: '' });
+                    }}
+                    placeholder="Confirm new password"
+                    error={errors.confirmPassword}
+                    required
+                />
+                <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-11 text-gray-400 hover:text-gray-300 transition-colors"
+                >
+                    {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+            </div>
 
             <div className="text-sm text-gray-400 space-y-1">
                 <p className="font-medium">Password must contain:</p>
@@ -75,7 +98,6 @@ const ResetPasswordForm = ({ onSubmit, loading = false }) => {
             >
                 {loading ? 'Resetting...' : 'Reset Password'}
             </Button>
-
         </div>
     )
 }

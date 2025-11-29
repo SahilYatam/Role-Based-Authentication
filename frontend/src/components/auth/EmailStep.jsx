@@ -4,11 +4,11 @@ import Button from "../ui/Button.jsx";
 const EmailStep = ({ onNext, formData, setFormData }) => {
     const handleSubmit = (e) => {
         e.preventDefault();
-        if (formData.email) onNext();
+        if (formData.email) onNext(formData.email);
     };
 
     return (
-        <div className="w-full max-w-md mx-auto px-6">
+        <form className="w-full max-w-md mx-auto px-6">
             <h2 className="text-2xl font-bold text-white mb-2">Enter your email address</h2>
             <p className="text-gray-400 text-sm mb-6">We'll send you a verification code</p>
 
@@ -26,7 +26,7 @@ const EmailStep = ({ onNext, formData, setFormData }) => {
                     Send OTP
                 </Button>
             </div>
-        </div>
+        </form>
     );
 };
 

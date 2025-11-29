@@ -19,14 +19,14 @@ const EditTaskModal = ({ task, onUpdate, onClose }) => {
                 <div className="space-y-3">
                     <input
                         type="text"
-                        value={editedTask.title}
-                        onChange={(e) => setEditedTask({ ...editedTask, title: e.target.value })}
+                        value={editedTask.taskName}
+                        onChange={(e) => setEditedTask({ ...editedTask, taskName: e.target.value })}
                         placeholder="Task title..."
                         className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
                     />
                     <textarea
-                        value={editedTask.description}
-                        onChange={(e) => setEditedTask({ ...editedTask, description: e.target.value })}
+                        value={editedTask.taskDescription}
+                        onChange={(e) => setEditedTask({ ...editedTask, taskDescription: e.target.value })}
                         placeholder="Task description..."
                         rows={4}
                         className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none"

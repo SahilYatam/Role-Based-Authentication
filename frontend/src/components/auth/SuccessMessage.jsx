@@ -1,3 +1,5 @@
+import { CheckCircle } from 'lucide-react';
+import Button from '../ui/Button.jsx';
 const SuccessMessage = ({ title, message, actionText, onAction }) => {
     return (
         <div className="text-center space-y-6">

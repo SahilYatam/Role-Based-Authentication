@@ -2,14 +2,15 @@ import { useState } from 'react'
 import OTPInput from '../ui/OTPInput.jsx';
 import Button from '../ui/Button.jsx';
 
-const OTPStep = ({ onNext, onBack, formData, setFormData }) => {
+const OTPStep = ({ onNext, onBack, formData, setFormData, loading }) => {
     const [otp, setOtp] = useState('');
-
+    
     const handleSubmit = (e) => {
         e.preventDefault();
         if (otp.length === 6) {
             setFormData({ ...formData, otp });
-            onNext();
+            // Pass the OTP to onNext
+            onNext(otp);
         }
     };
 
@@ -19,20 +20,36 @@ const OTPStep = ({ onNext, onBack, formData, setFormData }) => {
             <p className="text-gray-400 text-sm mb-8">
                 Enter the 6-digit code sent to {formData.email}
             </p>
-
-            <div className="space-y-8">
-                <OTPInput value={otp} onChange={setOtp} length={6} />
-
+            
+            <form onSubmit={handleSubmit} className="space-y-8">
+                <OTPInput 
+                    value={otp} 
+                    onChange={setOtp} 
+                    length={6}
+                    disabled={loading}
+                />
+                
                 <div className="flex gap-3">
-                    <Button variant="secondary" onClick={onBack} className="flex-1">
+                    <Button 
+                        type="button"
+                        variant="secondary" 
+                        onClick={onBack} 
+                        className="flex-1"
+                        disabled={loading}
+                    >
                         Back
                     </Button>
-                    <Button onClick={handleSubmit} className="flex-1">
-                        Verify OTP
+                    <Button 
+                        type="submit"
+                        className="flex-1"
+                        disabled={loading || otp.length !== 6}
+                    >
+                        {loading ? 'Verifying...' : 'Verify OTP'}
                     </Button>
                 </div>
-            </div>
+            </form>
         </div>
     );
 };
-export default OTPStep
+
+export default OTPStep;
