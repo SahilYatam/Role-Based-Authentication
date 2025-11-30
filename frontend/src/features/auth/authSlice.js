@@ -31,6 +31,7 @@ const authSlice = createSlice({
         clearMessages(state){
             state.successMessage = null;
             state.error = null;
+            state.loading = false;
         }
     },
 
