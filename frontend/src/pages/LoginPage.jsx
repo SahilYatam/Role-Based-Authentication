@@ -17,6 +17,10 @@ export default function LoginPage() {
     // Get state from Redux
     const { loading, error, user } = useSelector((state) => state.auth);
 
+    useEffect(() => {
+        dispatch(clearMessages());  // ← Clear on mount
+    }, [dispatch]);
+
     // Redirect if user is logged in
     useEffect(() => {
         if (user) {
