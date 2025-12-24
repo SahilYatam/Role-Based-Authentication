@@ -18,7 +18,7 @@ const app = express();
 
 app.use(helmet());
 app.use(cors({
-    origin: "https://role-based-authentication-c3q0k881u-sahils-projects-8a4effa5.vercel.app",
+    origin: process.env.CLIENT_URL,
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
 }))

@@ -60,13 +60,13 @@ const LoginForm = ({ onSubmit, loading = false }) => {
                     error={errors.password}
                     required
                 />
-                <Button
+                <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-11 text-gray-400 hover:text-gray-300 transition-colors"
                 >
                     {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                </Button>
+                </button>
             </div>
 
             <div className="flex items-center justify-between text-sm">
