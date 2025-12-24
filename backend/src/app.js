@@ -19,7 +19,8 @@ const app = express();
 app.use(helmet());
 app.use(cors({
     origin: "https://role-based-authentication-c3q0k881u-sahils-projects-8a4effa5.vercel.app",
-    credentials: true
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
 }))
 app.use(morgan("dev"));
 app.use(express.json({limit: "20kb"}));
@@ -87,6 +88,6 @@ app.get("/metrics", async(req, res) => {
 });
 
     // --- Health check endpoints ---
-app.get("/health", (req, res) => res.status(200).json({ status: "ok" }));
+app.get("/api/v1/health", (req, res) => res.status(200).json({ status: "ok" }));
 
 export {app, loadRoutes}
