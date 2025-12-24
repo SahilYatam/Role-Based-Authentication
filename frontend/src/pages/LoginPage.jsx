@@ -15,11 +15,7 @@ export default function LoginPage() {
     const navigate = useNavigate();
 
     // Get state from Redux
-    const { loading, error, user } = useSelector((state) => state.auth);
-
-    useEffect(() => {
-        dispatch(clearMessages());  // ← Clear on mount
-    }, [dispatch]);
+    const { loading, user } = useSelector((state) => state.auth);
 
     // Redirect if user is logged in
     useEffect(() => {
@@ -29,10 +25,9 @@ export default function LoginPage() {
     }, [user, navigate])
 
     useEffect(() => {
-        return () => {
-            dispatch(clearMessages());
-        }
-    }, [dispatch])
+        dispatch(clearMessages()); 
+    }, [dispatch]);
+
 
     const handleLogin = async (formData) => {
         dispatch(loginUser(formData));

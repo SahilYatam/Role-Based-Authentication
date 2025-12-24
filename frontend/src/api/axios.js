@@ -1,7 +1,7 @@
 import Axios from "axios";
 
 const axios = Axios.create({
-    baseURL: "http://localhost:8000/api/v1",
+    baseURL: "https://role-based-authentication-lftj.onrender.com/api/v1",
     withCredentials: true
 });
 
