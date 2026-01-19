@@ -14,7 +14,7 @@ const deleteExpiredSessions = async (batchSize = 500) => {
     let totalDeleted = 0;
     while(true){
         const expired = await Session.find(
-            {isActive: false, expiresAt: {$lt: new Date()}},
+            { expiresAt: { $lt: new Date() } },
             {_id: 1}
         ).limit(batchSize).lean();
 

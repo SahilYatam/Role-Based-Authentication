@@ -11,7 +11,21 @@ import {
     redisUtils,
 } from "../utils/index.js";
 
-const defaultRole = await Role.findOne({ key: process.env.ROLE_MEMBER });
+let defaultRoleCache = null;
+
+async function getDefaultRole() {
+    if (!defaultRoleCache) {
+        defaultRoleCache = await Role.findOne({
+            key: process.env.ROLE_MEMBER
+        });
+
+        if (!defaultRoleCache) {
+            throw new Error("Default role not found in DB");
+        }
+    }
+    return defaultRoleCache;
+}
+
 
 const toPublicUser = (user) => ({
     id: user._id,
@@ -39,10 +53,13 @@ export const authService = {
 
     async validateCredentials(userId, data) {
         const hashedPassword = await hashPassword(data.password);
+
+        const role = await getDefaultRole()
+
         const updatedUser = await userRepo.updateById(userId, {
             name: data.name,
             password: hashedPassword,
-            role: defaultRole._id,
+            role: role._id,
         });
 
         return toPublicUser(updatedUser);

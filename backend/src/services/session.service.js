@@ -1,9 +1,9 @@
 import {
-  logger,
-  ApiError,
-  hashToken,
-  generateAccessAndRefreshToken,
-  redisUtils,
+    logger,
+    ApiError,
+    hashToken,
+    generateAccessAndRefreshToken,
+    redisUtils,
 } from "../utils/index.js";
 
 import { sessionRepo } from "../repositories/session.repository.js";
@@ -11,7 +11,7 @@ import { sessionRepo } from "../repositories/session.repository.js";
 export const sessionService = {
     async createSession(userId) {
         try {
-            const {accessToken, refreshToken: rawRefreshToken, tokenExpiresAt} = generateAccessAndRefreshToken(userId);
+            const { accessToken, refreshToken: rawRefreshToken, tokenExpiresAt } = generateAccessAndRefreshToken(userId);
             const hashedRefreshToken = hashToken(rawRefreshToken);
 
             await redisUtils.cacheToken(userId, hashedRefreshToken, tokenExpiresAt);
@@ -34,7 +34,7 @@ export const sessionService = {
     async clearExpiredSessions() {
         try {
             const totalDeleted = await sessionRepo.deleteExpiredSessions();
-            const msg = totalDeleted > 0 
+            const msg = totalDeleted > 0
                 ? `🧹 Cleaned ${totalDeleted} expired sessions`
                 : "✅ No expired sessions";
             logger.info(msg);
@@ -45,30 +45,46 @@ export const sessionService = {
 
     async refreshAccessToken(token) {
         try {
-            if(!token) throw new ApiError(401, "Unauthorized request");
+            if (!token) throw new ApiError(401, "Unauthorized request");
 
             const hashedRefreshToken = hashToken(token);
 
-            const redisKey = await redisUtils.findTokenKey(hashedRefreshToken);
+            const session = await sessionRepo.findSession({
+                refreshToken: hashedRefreshToken,
+                isActive: true,
+            });
 
-            const userId = redisKey ? redisKey.split(":")[1] : null;
-            const session = await sessionRepo.findSession(
-                userId 
-                    ? { userId, refreshToken: hashedRefreshToken, isActive: true }
-                    : { refreshToken: hashedRefreshToken, isActive: true }
+            if (!session) throw new ApiError(403, "Invalid or expired refresh token");
+
+
+            const redisKey = redisUtils.buildTokenKey(
+                session.userId,
+                hashedRefreshToken
             );
-            if(!session) throw new ApiError(403, "Invalid or expired refresh token");
-            if(new Date(session.expiresAt) < new Date()){
-                throw new ApiError(403, "Session expired");
+
+            const exists = await redisUtils.exists(redisKey);
+            if (!exists) {
+                throw new ApiError(403, "Refresh token expired in cache");
             }
 
+            logger.info(`Session found: ${session?._id}`);
+
+            logger.info("Redis key exists:", exists);
+
+
             // rotate
-            const {accessToken, refreshToken: newRawRefreshToken, tokenExpiresAt} = generateAccessAndRefreshToken(session.userId);
+            const { accessToken, refreshToken: newRawRefreshToken, tokenExpiresAt } = generateAccessAndRefreshToken(session.userId);
             const newHashedToken = hashToken(newRawRefreshToken);
 
             await Promise.allSettled([
-                redisUtils.removeToken(session.userId, hashedRefreshToken),
-                redisUtils.cacheToken(session.userId, newHashedToken, tokenExpiresAt),
+                redisUtils.removeToken(
+                    session.userId, hashedRefreshToken
+                ),
+                redisUtils.cacheToken(
+                    session.userId,
+                    newHashedToken,
+                    tokenExpiresAt
+                ),
                 sessionRepo.updateSessionById(session._id, {
                     refreshToken: newHashedToken,
                     expiresAt: new Date(tokenExpiresAt),
