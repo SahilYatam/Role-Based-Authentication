@@ -1,6 +1,6 @@
 import dotenv from "dotenv";
 if (process.env.NODE_ENV !== "production") {
-  dotenv.config();
+    dotenv.config();
 }
 
 import express from "express";
@@ -10,37 +10,65 @@ import morgan from "morgan";
 import cookieParser from "cookie-parser";
 import rateLimit from "express-rate-limit";
 
-import { errorHandler, notFoundHandler } from "./middlewares/globalErrorHandler.js";
+import {
+    errorHandler,
+    notFoundHandler,
+} from "./middlewares/globalErrorHandler.js";
 
 import { httpRequestsDuration, register } from "./utils/monitoring/metrics.js";
 
 const app = express();
 
-app.use(helmet());
-app.use(cors({
-    origin: process.env.CLIENT_URL,
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
-}))
+app.set("trust proxy", 1);
+
+/**
+ * Helmet – allow cross-origin access for frontend apps
+ */
+app.use(
+    helmet({
+        crossOriginResourcePolicy: { policy: "cross-origin" },
+        crossOriginOpenerPolicy: false,
+    }),
+);
+
+const allowedOrigins = [
+    "https://role-based-authentication-psi.vercel.app",
+    "https://role-based-authentication-git-main-sahils-projects-8a4effa5.vercel.app/",
+    "http://localhost:3000",
+];
+
+app.use(
+    cors({
+        origin: (origin, callback) => {
+            if (!origin) return callback(null, true); // Postman / server calls
+            if (allowedOrigins.includes(origin)) {
+                return callback(null, true);
+            }
+            console.error("❌ Blocked by CORS:", origin);
+            return callback(new Error("Not allowed by CORS"));
+        },
+        credentials: true,
+        methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    }),
+);
+
 app.use(morgan("dev"));
-app.use(express.json({limit: "20kb"}));
-app.use(express.urlencoded({extended: true}));
+app.use(express.json({ limit: "20kb" }));
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-function limiter (windowMs, max) {
-    return rateLimit ({
+function limiter(windowMs, max) {
+    return rateLimit({
         windowMs,
         max,
         message: "Too many requests, please try again later.",
         standardHeaders: true,
-        legacyHeaders: false
+        legacyHeaders: false,
     });
 }
 
-app.set("trust proxy", 1);
-
 // global limiter, applies to all routes
-const globalRateLimiting = limiter(15 * 60 * 1000, 1000) // 15 minutes, 1000 requests
+const globalRateLimiting = limiter(15 * 60 * 1000, 1000); // 15 minutes, 1000 requests
 app.use(globalRateLimiting);
 
 const authLimiter = limiter(15 * 60 * 1000, 100);
@@ -54,7 +82,8 @@ const loadRoutes = async () => {
     const sessionRouter = (await import("./routers/session.routes.js")).default;
     const taskRouter = (await import("./routers/task.routes.js")).default;
     const roleRouter = (await import("./routers/role.routes.js")).default;
-    const roleRequestRouter = (await import("./routers/roleRequest.routes.js")).default;
+    const roleRequestRouter = (await import("./routers/roleRequest.routes.js"))
+        .default;
 
     app.use("/api/v1/auth", authLimiter, authRouter);
     app.use("/api/v1/user", authLimiter, userRouter);
@@ -66,7 +95,6 @@ const loadRoutes = async () => {
     app.use(errorHandler);
     app.use(notFoundHandler);
 };
-
 
 // --- Metrics middleware ---
 app.use((req, res, next) => {
@@ -82,12 +110,12 @@ app.use((req, res, next) => {
 });
 
 // --- Metrics endpoint ---
-app.get("/metrics", async(req, res) => {
-    res.set("Content-Type", client.register.contentType);
+app.get("/metrics", async (req, res) => {
+    res.set("Content-Type", register.contentType);
     res.send(await register.metrics());
 });
 
-    // --- Health check endpoints ---
+// --- Health check endpoints ---
 app.get("/api/v1/health", (req, res) => res.status(200).json({ status: "ok" }));
 
-export {app, loadRoutes}
+export { app, loadRoutes };

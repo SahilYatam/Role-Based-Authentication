@@ -11,11 +11,8 @@ let failedQueue = []
 // eslint-disable-next-line no-unused-vars
 const processQueue = (error, token = null) => {
     failedQueue.forEach(prom => {
-        if(error){
-            prom.reject(error)
-        } else {
-            prom.resolve(error)
-        }
+        if(error) prom.reject(error);
+        else prom.resolve();
     })
 
     failedQueue = []
