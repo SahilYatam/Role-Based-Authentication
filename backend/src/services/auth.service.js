@@ -13,7 +13,6 @@ import {
 
 const defaultRole = await Role.findOne({ key: process.env.ROLE_MEMBER });
 
-
 const toPublicUser = (user) => ({
     id: user._id,
     name: user.name,
@@ -22,7 +21,7 @@ const toPublicUser = (user) => ({
         ? {
             id: user.role._id,
             key: user.role.key,
-            name: user.role.name
+            name: user.role.name,
         }
         : { key: "MEMBER", name: "Member" },
 });
@@ -43,10 +42,10 @@ export const authService = {
         const updatedUser = await userRepo.updateById(userId, {
             name: data.name,
             password: hashedPassword,
-            role: defaultRole._id
+            role: defaultRole._id,
         });
 
-        return toPublicUser(updatedUser)
+        return toPublicUser(updatedUser);
     },
 
     async login(email, password) {
@@ -61,9 +60,11 @@ export const authService = {
 
     async logout(refreshToken) {
         const hashedToken = hashToken(refreshToken);
-        const session = await sessionRepo.findSession({ refreshToken: hashedToken, isActive: true });
+        const session = await sessionRepo.findSession({
+            refreshToken: hashedToken,
+            isActive: true,
+        });
         logger.info("Found session:", session);
-
 
         if (!session) throw new ApiError(403, "Unauthorized request");
         await sessionRepo.updateSessionById(session._id, { isActive: false });
@@ -72,5 +73,4 @@ export const authService = {
         logger.info(`🔓 Session invalidated (Session ID: ${session._id})`);
         return { message: "Session invalidated successfully" };
     },
-
-}
+};

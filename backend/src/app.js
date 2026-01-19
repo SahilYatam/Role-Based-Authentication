@@ -19,6 +19,18 @@ import { httpRequestsDuration, register } from "./utils/monitoring/metrics.js";
 
 const app = express();
 
+app.use((req, res, next) => {
+    console.log("🔥 Origin:", req.headers.origin);
+    res.setHeader("X-Debug-Origin", req.headers.origin || "none");
+    next();
+});
+
+app.use((req, res, next) => {
+  res.setHeader("X-Build-Id", "BUILD-2026-01-19-A");
+  next();
+});
+
+
 app.set("trust proxy", 1);
 
 /**
@@ -33,7 +45,7 @@ app.use(
 
 const allowedOrigins = [
     "https://role-based-authentication-psi.vercel.app",
-    "https://role-based-authentication-git-main-sahils-projects-8a4effa5.vercel.app/",
+    "https://role-based-authentication-git-main-sahils-projects-8a4effa5.vercel.app",
     "http://localhost:3000",
 ];
 
