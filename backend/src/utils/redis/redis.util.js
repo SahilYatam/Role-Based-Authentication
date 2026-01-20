@@ -7,17 +7,18 @@ const buildTokenKey = (userId, hashedToken) => {
 const cacheToken = async (userId, hashedToken, expiresAt) => {
     const ttlSeconds = Math.max(
         1,
-        Math.floor(expiresAt - Date.now() / 1000)
+        Math.floor((expiresAt - Date.now()) / 1000)
     );
 
     const key = buildTokenKey(userId, hashedToken);
 
     await redis.set(key, "1", {
-        ex: ttlSeconds
+        ex: ttlSeconds,
     });
 
     return key;
 };
+
 
 const removeToken = async (userId, hashedToken) => {
     const key = buildTokenKey(userId, hashedToken);
