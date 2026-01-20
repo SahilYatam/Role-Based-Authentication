@@ -6,7 +6,9 @@ export const otpService = {
     async generateAndSend(email) {
         const otp = generateOtp();
         const hashedOtp = hashToken(otp);
-        await redis.set(`otp:user:${email}`, hashedOtp, "EX", 300); // 5 min TTL
+        await redis.set(`otp:user:${email}`, hashedOtp, {
+            ex: 300
+        }); // 5 min TTL
 
         await sendMessage("otpQueue", {
             type: "OTP_EMAIL",
