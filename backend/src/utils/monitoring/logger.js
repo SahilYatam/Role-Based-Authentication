@@ -16,6 +16,8 @@ const logFormat = format.combine(
     format.json(),
 );
 
+const isProd = process.env.NODE_ENV === "production";
+
 const logger = createLogger({
     level: "info",
     format: logFormat,
