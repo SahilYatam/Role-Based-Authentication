@@ -27,38 +27,37 @@ const gracefulShutdown = async (signal) => {
   if (isShuttingDown) return;
   isShuttingDown = true;
 
-  console.log(`🛑 Shutting down due to ${signal}...`);
   logger.info(`🛑 Shutting down due to ${signal}...`);
 
   const shutdownTimer = setTimeout(() => {
-    console.error("⏱ Force shutdown after timeout");
+    logger.error("⏱ Force shutdown after timeout");
     process.exit(1);
   }, SHUTDOWN_TIMEOUT);
 
   try {
     if (httpServer) {
       await new Promise((resolve) => httpServer.close(() => resolve()));
-      console.log("HTTP server closed");
+      logger.info("HTTP server closed");
     }
 
     if (mongoose.connection.readyState === 1) {
       await mongoose.disconnect();
-      console.log("MongoDB connection closed");
+      logger.info("MongoDB connection closed");
     }
 
     await shutdownLogger();
     clearTimeout(shutdownTimer);
-    console.log("Shutdown complete");
+    logger.info("Shutdown complete");
     process.exit(0);
   } catch (err) {
     clearTimeout(shutdownTimer);
-    console.error("Error during shutdown:", err);
+    logger.error("Error during shutdown:", err);
     process.exit(1);
   }
 };
 
 const handleFatalError = async (type, error) => {
-  console.error(`🚨 ${type.toUpperCase()}:`, error);
+  logger.error(`🚨 ${type.toUpperCase()}:`, error);
   await gracefulShutdown(type);
 };
 
@@ -75,42 +74,38 @@ process.once("SIGQUIT", () => gracefulShutdown("SIGQUIT"));
 // Main startup
 const startServer = async () => {
   try {
-    console.log("🔌 Connecting to MongoDB...");
+    logger.info("🔌 Connecting to MongoDB...");
     await connectDB();
-    console.log("✅ MongoDB connected");
+    logger.info("✅ MongoDB connected");
 
-    console.log("📨 Connecting to RabbitMQ...");
+    logger.info("📨 Connecting to RabbitMQ...");
     await connectRabbitMQ();
-    console.log("✅ RabbitMQ connected");
+    logger.info("✅ RabbitMQ connected");
 
-    console.log("📨 Starting RabbitMQ consumer...");
-    await startConsumer();
-    console.log("✅ RabbitMQ consumer started");
-
-    console.log("📁 Loading routes...");
+    logger.info("📁 Loading routes...");
     await loadRoutes();
-    console.log("✅ Routes loaded");
+    logger.info("✅ Routes loaded");
 
-    console.log("🚀 Seeding default roles...");
+    logger.info("🚀 Seeding default roles...");
     const { default: initRoles } = await import("./services/role.service.js");
     await initRoles();
-    console.log("✅ Roles seeded");
+    logger.info("✅ Roles seeded");
 
-    console.log("🚀 Ensuring unique SuperAdmin index...");
+    logger.info("🚀 Ensuring unique SuperAdmin index...");
     const { ensureUniqueSuperAdminIndex } = await import("./startup/setupIndexes.js");
     await ensureUniqueSuperAdminIndex();
-    console.log("✅ SuperAdmin index ensured");
+    logger.info("✅ SuperAdmin index ensured");
 
-    console.log(`🚀 Starting HTTP server on port ${port}...`);
+    logger.info(`🚀 Starting HTTP server on port ${port}...`);
     httpServer = await new Promise((resolve, reject) => {
       const server = app.listen(port, () => {
-        console.log(`🚀 Server is running on PORT: ${port}`);
+        logger.info(`🚀 Server is running on PORT: ${port}`);
         resolve(server);
       });
       server.on("error", reject);
     });
   } catch (err) {
-    console.error("❌ Server startup error:", err);
+    logger.error("❌ Server startup error:", err);
     await gracefulShutdown("STARTUP_FAILURE");
   }
 };
