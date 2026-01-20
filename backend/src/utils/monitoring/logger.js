@@ -1,69 +1,64 @@
+import fs from "fs";
 import { createLogger, format, transports } from "winston";
-import LokiTransport from "winston-loki";
 import DailyRotateFile from "winston-daily-rotate-file";
+
+const LOG_DIR = "logs";
+
+if (!fs.existsSync(LOG_DIR)) {
+    fs.mkdirSync(LOG_DIR, { recursive: true });
+}
 
 const logFormat = format.combine(
     format.timestamp({
-        format: 'YYYY-MM-DD HH:mm:ss:SSS'
+        format: "YYYY-MM-DD HH:mm:ss:SSS",
     }),
-    format.errors({stack: true}), 
+    format.errors({ stack: true }),
     format.json(),
-    format.printf(({timestamp, level, message}) => {
-        return `${timestamp} [${level.toLocaleUpperCase()}]: ${message}`
-    })
 );
 
 const logger = createLogger({
-    level: 'info',
+    level: "info",
     format: logFormat,
     transports: [
         new transports.Console({
-            format: format.combine(
-                format.colorize(),
-                format.timestamp({
-                    format: 'YYYY-MM-DD HH:mm:ss:SSS'
-                }),
-                format.printf(({timestamp, level, message}) => {
-                    return `${timestamp} [${level.toLocaleUpperCase ()}]: ${message}`
-                })
-            )
+            format: isProd
+                ? format.json()
+                : format.combine(
+                    format.colorize(),
+                    format.timestamp({ format: "YYYY-MM-DD HH:mm:ss:SSS" }),
+                    format.printf(
+                        ({ timestamp, level, message }) =>
+                            `${timestamp} [${level.toUpperCase()}]: ${message}`,
+                    ),
+                ),
         }),
 
         new DailyRotateFile({
-            filename: 'logs/app-%DATE%.log',
-            datePattern: 'YYYY-MM-DD',
+            filename: `${LOG_DIR}/app-%DATE%.log`,
+            datePattern: "YYYY-MM-DD",
             zippedArchive: true,
             maxSize: "10m",
             maxFiles: "14d",
-            auditFile: 'logs/audit.json'
+            auditFile: `${LOG_DIR}/audit.json`,
         }),
 
         new DailyRotateFile({
-            level: 'error',
-            filename: 'logs/error-%DATE%.log',
-            datePattern: 'YYYY-MM-DD',
+            level: "error",
+            filename: `${LOG_DIR}/error-%DATE%.log`,
+            datePattern: "YYYY-MM-DD",
             zippedArchive: true,
             maxSize: "5m",
             maxFiles: "30d",
-            auditFile: 'logs/error-audit.json'
-        }),
-
-        new LokiTransport({
-            host: "http://127.0.0.1:3100"
+            auditFile: `${LOG_DIR}/error-audit.json`,
         }),
     ],
 
     exceptionHandlers: [
-        new transports.File({filename: 'logs/exceptions.log'})
+        new transports.File({ filename: `${LOG_DIR}/exceptions.log` }),
     ],
     rejectionHandlers: [
-        new transports.File({filename: 'logs/rejections.log'})
-    ]
+        new transports.File({ filename: `${LOG_DIR}/rejections.log` }),
+    ],
 });
-
-import fs from 'fs';
-if(!fs.existsSync('logs')){
-    fs.mkdirSync('logs', {recursive: true});
-} 
 
 export default logger;

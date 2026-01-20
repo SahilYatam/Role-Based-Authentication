@@ -3,7 +3,6 @@ import mongoose from "mongoose";
 import { app, loadRoutes } from "./app.js";
 import logger from "./utils/monitoring/logger.js";
 import { connectRabbitMQ } from "./config/rabbitMq.config.js";
-import { startConsumer } from "./message-broker/consumer.js";
 
 const port = process.env.PORT || 8000;
 
