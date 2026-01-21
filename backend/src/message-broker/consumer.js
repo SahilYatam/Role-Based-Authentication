@@ -26,7 +26,7 @@ export const startConsumer = async () => {
                 }
                 channel.ack(msg);
             } catch (err) {
-                logger.error(`❌ Error in consumer (${queue}):`, err);
+                logger.error(`❌ Error in consumer (${queue})`, err);
                 channel.nack(msg, false, false);
             }
 

@@ -11,6 +11,7 @@ export const sendMessage = async (queue, payload) => {
         await publishMessage(queue, payload);
         logger.info(`📨 Message published to ${queue}`);
     } catch (error) {
-        logger.error(`⚠️ Failed to publish message to ${queue}:`, err);
+        logger.error(`⚠️ Failed to publish message to ${queue}:`, error);
+        throw error;
     }
 }

@@ -44,7 +44,9 @@ export const sendEmail = async (email, subject, template, variables) => {
             email,
             subject,
         });
-        throw new ApiError(500, "Failed to send email. Please try again later.");
+        if(!transporter){
+            throw new Error("Email transporter not initialized");
+        }
     }
 }
 
