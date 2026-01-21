@@ -1,4 +1,4 @@
-import { transporter } from "../config/email.config.js"
+import { apiInstance } from "../config/email.config.js"
 import { logger } from "../utils/index.js";
 
 import {
@@ -30,25 +30,34 @@ export const sendEmail = async (email, subject, template, variables) => {
     try {
         const html = injectTemplateVariables(template, variables);
 
-        await transporter.sendMail({
-            from: process.env.EMAIL_USER,
-            to: email,
+        const sendSmtpEmail = {
+            sender: { 
+                email: process.env.SMTP_USER,
+                name: "Role based authentication"
+            },
+            to: [{ email }],
             subject,
-            html
-        })
+            htmlContent: html
+        };
+
+        const result = await apiInstance.sendTransacEmail(sendSmtpEmail);
+        
+        logger.info(`✅ Email sent successfully to ${email}`, { 
+            messageId: result.messageId 
+        });
+        
+        return result;
 
     } catch (error) {
         logger.error("❌ Error while sending email", {
             message: error.message,
-            stack: error.stack,
+            body: error.body,
             email,
             subject,
-            code: error.code
         });
         throw error;
     }
 }
-
 
 // specific email types
 export const sendOtpEmail = async (email, otp) => {
