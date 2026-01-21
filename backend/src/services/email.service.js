@@ -38,15 +38,14 @@ export const sendEmail = async (email, subject, template, variables) => {
         })
 
     } catch (error) {
-        logger.error("Error while sending email", {
+        logger.error("❌ Error while sending email", {
             message: error.message,
             stack: error.stack,
             email,
             subject,
+            code: error.code
         });
-        if(!transporter){
-            throw new Error("Email transporter not initialized");
-        }
+        throw error;
     }
 }
 
