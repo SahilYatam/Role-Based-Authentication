@@ -12,10 +12,9 @@
   "author": "Sahil",
   "license": "ISC",
   "dependencies": {
-    "@getbrevo/brevo": "^3.0.1",
+    "@sendgrid/mail": "^8.1.6",
     "@upstash/redis": "^1.35.7",
     "amqplib": "^0.10.9",
-    "axios": "^1.13.2",
     "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",

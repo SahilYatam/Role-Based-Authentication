@@ -1,4 +1,4 @@
-import { transporter } from "../config/email.config.js"
+import sgMail from "../config/email.config.js";
 import { logger } from "../utils/index.js";
 
 import {
@@ -31,28 +31,21 @@ export const sendEmail = async (email, subject, template, variables = {}) => {
     try {
         const html = injectTemplateVariables(template, variables);
 
-        const info = await transporter.sendMail({
-            from: `"Role based authentication" <${process.env.SMTP_USER}>`,
+        const msg = {
             to: email,
+            from: process.env.SENDGRID_FROM_EMAIL,
             subject,
-            html,
-        });
+            html
+        }
 
-        logger.info(`✅ Email sent successfully to ${email}`, {
-            messageId: info.messageId,
-            response: info.response,
-        });
+        await sgMail.send(msg);
 
-        return info;
+        logger.info(`✅ Email sent successfully to ${email}`, { subject });
     } catch (error) {
-        logger.error("❌ SMTP email error", {
+        logger.error("❌ SendGrid email error", {
             message: error.message,
-            code: error.code,
-            command: error.command,
-            email,
-            subject,
+            response: error.response?.body,
         });
-
         throw error;
     }
 };

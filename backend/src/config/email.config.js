@@ -1,13 +1,14 @@
-import nodemailer from "nodemailer";
+import sgMail from "@sendgrid/mail";
+import {logger} from "../utils/index.js"
 
-export const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: Number(process.env.SMTP_PORT),
-    secure: false,
-    auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-    },
-    connectionTimeout: 10_000,
-    greetingTimeout: 10_000,
-});
+const apiKey = process.env.SENDGRID_API_KEY;
+
+if(!apiKey){
+    throw new Error("❌ SENDGRID_API_KEY environment variable is not set");
+}
+
+sgMail.setApiKey(apiKey);
+
+logger.info("✅ SendGrid initialized successfully");
+
+export default sgMail;
