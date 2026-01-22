@@ -31,7 +31,7 @@ export const sendEmail = async (email, subject, template, variables) => {
         const html = injectTemplateVariables(template, variables);
 
         const sendSmtpEmail = {
-            sender: { 
+            sender: {
                 email: process.env.SMTP_USER,
                 name: "Role based authentication"
             },
@@ -41,22 +41,24 @@ export const sendEmail = async (email, subject, template, variables) => {
         };
 
         const result = await apiInstance.sendTransacEmail(sendSmtpEmail);
-        
-        logger.info(`✅ Email sent successfully to ${email}`, { 
-            messageId: result.messageId 
+
+        logger.info(`✅ Email sent successfully to ${email}`, {
+            messageId: result.messageId
         });
-        
+
         return result;
 
     } catch (error) {
-        logger.error("❌ Error while sending email", {
+        logger.error("❌ Brevo email error", {
+            status: error?.response?.status,
+            data: error?.response?.data,
             message: error.message,
-            body: error.body,
             email,
             subject,
         });
         throw error;
     }
+
 }
 
 // specific email types
