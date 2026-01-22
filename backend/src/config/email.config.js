@@ -1,16 +1,16 @@
-import * as brevo from '@getbrevo/brevo';
+import Brevo from "@getbrevo/brevo";
 
-const apiKey = process.env.BREVO_API_KEY;
-
-if (!apiKey) {
-    throw new Error('BREVO_API_KEY environment variable is not set');
+if (!process.env.BREVO_API_KEY) {
+    throw new Error("BREVO_API_KEY is missing");
 }
 
-const apiInstance = new brevo.TransactionalEmailsApi();
+console.log("🚨 BREVO_API_KEY VALUE:", process.env.BREVO_API_KEY);
+console.log("🚨 BREVO_API_KEY EXISTS:", !!process.env.BREVO_API_KEY);
+
+const apiInstance = new Brevo.TransactionalEmailsApi();
 apiInstance.setApiKey(
-    brevo.TransactionalEmailsApiApiKeys.apiKey,
-    apiKey
+    Brevo.TransactionalEmailsApiApiKeys.apiKey,
+    process.env.BREVO_API_KEY
 );
 
 export { apiInstance };
-

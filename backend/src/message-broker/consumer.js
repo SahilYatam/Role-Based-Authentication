@@ -39,13 +39,12 @@ export const startConsumer = async () => {
                 // Requeue the message for retry (max 3 attempts)
                 const retryCount = (msg.properties.headers?.['x-retry-count'] || 0) + 1;
 
-                if (retryCount < 3) {
-                    logger.warn(`🔄 Retrying message (attempt ${retryCount}/3)`);
-                    channel.nack(msg, false, true); // Requeue
+                if (retryCount < 1) {
+                    channel.nack(msg, false, true);
                 } else {
-                    logger.error(`❌ Message failed after 3 attempts, sending to DLQ`);
                     channel.nack(msg, false, false);
                 }
+
             }
         });
     }
