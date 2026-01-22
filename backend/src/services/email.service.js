@@ -1,4 +1,4 @@
-import { apiInstance } from "../config/email.config.js"
+import { transporter } from "../config/email.config.js"
 import { logger } from "../utils/index.js";
 
 import {
@@ -26,40 +26,36 @@ const injectTemplateVariables = (template, variables) => {
  * @param {object} template - Key-value pairs for template placeholders
  */
 
-export const sendEmail = async (email, subject, template, variables) => {
+
+export const sendEmail = async (email, subject, template, variables = {}) => {
     try {
         const html = injectTemplateVariables(template, variables);
 
-        const sendSmtpEmail = {
-            sender: {
-                email: process.env.SMTP_USER,
-                name: "Role based authentication"
-            },
-            to: [{ email }],
+        const info = await transporter.sendMail({
+            from: `"Role based authentication" <${process.env.SMTP_USER}>`,
+            to: email,
             subject,
-            htmlContent: html
-        };
-
-        const result = await apiInstance.sendTransacEmail(sendSmtpEmail);
-
-        logger.info(`✅ Email sent successfully to ${email}`, {
-            messageId: result.messageId
+            html,
         });
 
-        return result;
+        logger.info(`✅ Email sent successfully to ${email}`, {
+            messageId: info.messageId,
+            response: info.response,
+        });
 
+        return info;
     } catch (error) {
-        logger.error("❌ Brevo email error", {
-            status: error?.response?.status,
-            data: error?.response?.data,
+        logger.error("❌ SMTP email error", {
             message: error.message,
+            code: error.code,
+            command: error.command,
             email,
             subject,
         });
+
         throw error;
     }
-
-}
+};
 
 // specific email types
 export const sendOtpEmail = async (email, otp) => {
