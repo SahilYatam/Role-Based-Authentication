@@ -1,12 +1,8 @@
-import { connectRabbitMQ } from "./config/rabbitMq.config.js";
 import { startConsumer } from "./message-broker/consumer.js";
 import { logger } from "./utils/index.js";
 
-const startWorker = async () => {
+export const startWorker = async () => {
   try {
-    logger.info("🐇 Connecting RabbitMQ (worker)...");
-    await connectRabbitMQ();
-
     logger.info("👂 Starting RabbitMQ consumers...");
     await startConsumer();
 
@@ -16,5 +12,3 @@ const startWorker = async () => {
     process.exit(1);
   }
 };
-
-startWorker();

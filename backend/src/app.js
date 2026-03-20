@@ -16,11 +16,12 @@ import {
 } from "./middlewares/globalErrorHandler.js";
 
 import { httpRequestsDuration, register } from "./utils/monitoring/metrics.js";
+import { logger } from "./utils/index.js";
 
 const app = express();
 
 app.use((req, res, next) => {
-    console.log("🔥 Origin:", req.headers.origin);
+    logger.info("🔥 Origin:", req.headers.origin);
     res.setHeader("X-Debug-Origin", req.headers.origin || "none");
     next();
 });
@@ -56,7 +57,7 @@ app.use(
             if (allowedOrigins.includes(origin)) {
                 return callback(null, true);
             }
-            console.error("❌ Blocked by CORS:", origin);
+            logger.error("❌ Blocked by CORS:", origin);
             return callback(new Error("Not allowed by CORS"));
         },
         credentials: true,
