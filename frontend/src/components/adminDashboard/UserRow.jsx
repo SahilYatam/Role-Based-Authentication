@@ -20,7 +20,7 @@ const UserRow = ({ user }) => {
                     <Avatar name={user.name} />
                     <div>
                         <p className="text-white font-medium">{user.name}</p>
-                        <p className="text-gray-400 text-sm">{user.email}</p>
+                        {/* <p className="text-gray-400 text-sm">{user.email}</p> */}
                     </div>
                 </div>
             </td>

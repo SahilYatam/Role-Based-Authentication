@@ -2,21 +2,21 @@ import Axios from "axios";
 
 const axios = Axios.create({
     baseURL: "https://role-based-authentication-lftj.onrender.com/api/v1",
-    withCredentials: true
+    withCredentials: true,
 });
 
-let isRefreshing = false
-let failedQueue = []
+let isRefreshing = false;
+let failedQueue = [];
 
 // eslint-disable-next-line no-unused-vars
 const processQueue = (error, token = null) => {
-    failedQueue.forEach(prom => {
-        if(error) prom.reject(error);
-        else prom.resolve();
-    })
+    failedQueue.forEach((prom) => {
+        if (error) prom.reject(error);
+        else prom.resolve(token);
+    });
 
-    failedQueue = []
-}
+    failedQueue = [];
+};
 
 // Response interceptor to handle token refresh
 axios.interceptors.response.use(
@@ -24,19 +24,27 @@ axios.interceptors.response.use(
     async (error) => {
         const originalRequest = error.config;
 
-        if(error.response?.status === 401 && !originalRequest._retry){
-            if(isRefreshing){
+        const isAuthRoute =
+            originalRequest.url.includes("/auth") ||
+            originalRequest.url.includes("/session/refresh-accessToken");
+
+        if (
+            error.response?.status === 401 &&
+            !originalRequest._retry &&
+            !isAuthRoute
+        ) {
+            if (isRefreshing) {
                 // If already refreshing, queue this request
                 return new Promise((resolve, reject) => {
-                    failedQueue.push({resolve, reject});
+                    failedQueue.push({ resolve, reject });
                 })
 
                     .then(() => {
                         return axios(originalRequest);
                     })
-                    .catch(err => {
+                    .catch((err) => {
                         return Promise.reject(err);
-                    })
+                    });
             }
 
             originalRequest._retry = true;
@@ -44,8 +52,10 @@ axios.interceptors.response.use(
 
             try {
                 // Call refresh token endpoint
-                await axios.post("/session/refresh-accessToken", {}, 
-                    {withCredentials: true}
+                await axios.post(
+                    "/session/refresh-accessToken",
+                    {},
+                    { withCredentials: true },
                 );
 
                 processQueue(null);
@@ -55,17 +65,16 @@ axios.interceptors.response.use(
                 return axios(originalRequest);
             } catch (refreshError) {
                 processQueue(refreshError, null);
-                isRefreshing = false
+                isRefreshing = false;
 
                 // Redirect to login if refresh fails
                 window.location.href = "/login";
                 return Promise.reject(refreshError);
             }
-
         }
 
-        return Promise.reject(error)
-    }
-)
+        return Promise.reject(error);
+    },
+);
 
 export default axios;
