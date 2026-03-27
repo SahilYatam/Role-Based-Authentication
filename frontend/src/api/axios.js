@@ -8,17 +8,20 @@ const axios = Axios.create({
 let isRefreshing = false;
 let failedQueue = [];
 
-// eslint-disable-next-line no-unused-vars
-const processQueue = (error, token = null) => {
+const processQueue = (error) => {
     failedQueue.forEach((prom) => {
         if (error) prom.reject(error);
-        else prom.resolve(token);
+        else prom.resolve();
     });
-
     failedQueue = [];
 };
 
-// Response interceptor to handle token refresh
+// 🔥 Centralized logout handler
+const redirectToLogin = () => {
+    window.history.pushState({}, "", "/login");
+    window.dispatchEvent(new PopStateEvent("popstate"));
+};
+
 axios.interceptors.response.use(
     (response) => response,
     async (error) => {
@@ -34,47 +37,36 @@ axios.interceptors.response.use(
             !isAuthRoute
         ) {
             if (isRefreshing) {
-                // If already refreshing, queue this request
                 return new Promise((resolve, reject) => {
                     failedQueue.push({ resolve, reject });
                 })
-
-                    .then(() => {
-                        return axios(originalRequest);
-                    })
-                    .catch((err) => {
-                        return Promise.reject(err);
-                    });
+                    .then(() => axios(originalRequest))
+                    .catch((err) => Promise.reject(err));
             }
 
             originalRequest._retry = true;
             isRefreshing = true;
 
             try {
-                // Call refresh token endpoint
-                await axios.post(
-                    "/session/refresh-accessToken",
-                    {},
-                    { withCredentials: true },
-                );
+                await axios.post("/session/refresh-accessToken");
 
                 processQueue(null);
                 isRefreshing = false;
 
-                // Retry the original request
                 return axios(originalRequest);
             } catch (refreshError) {
-                processQueue(refreshError, null);
+                processQueue(refreshError);
                 isRefreshing = false;
 
-                // Redirect to login if refresh fails
-                window.location.href = "/login";
+                // 🔥 Clean SPA-safe redirect
+                redirectToLogin();
+
                 return Promise.reject(refreshError);
             }
         }
 
         return Promise.reject(error);
-    },
+    }
 );
 
 export default axios;
